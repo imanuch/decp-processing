@@ -44,7 +44,10 @@ def add_unite_legale_data(
     df: pl.LazyFrame, df_sirets: pl.LazyFrame, siret_column: str, type_siret: str
 ) -> pl.LazyFrame:
     # Extraction du SIREN à partir du SIRET (9 premiers caractères)
-    df_sirets = df_sirets.with_columns(pl.col(siret_column).str.head(9).alias("siren"))
+    # S'assurer que la colonne est bien de type String et filtrer les nulls
+    df_sirets = df_sirets.with_columns(
+        pl.col(siret_column).cast(pl.Utf8).str.head(9).alias("siren")
+    ).filter(pl.col("siren").is_not_null())
 
     # Récupération des données des unités légales issues du flow de preprocess
     unites_legales_lf = pl.scan_parquet(SIRENE_DATA_DIR / "unites_legales.parquet")

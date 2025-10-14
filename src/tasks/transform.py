@@ -151,7 +151,22 @@ def replace_with_modification_data(lf: pl.LazyFrame):
     # Étape 2: Dédupliquer et créer une copie du DataFrame initial sans les colonnes "modifications"
     # On peut dédupliquer aveuglément car la seule chose qui varient dans les lignes d'un même
     # uid, c'est les données de modifs
+    print(f"\n[DEBUG Étape 2 AVANT unique] Lignes avant dédupe: {lf.select(pl.len()).collect().item()}")
+
+    # Log quelques exemples de montants avant unique
+    sample_before = lf.select("uid", "montant", "dateNotification").head(10).collect()
+    print("[DEBUG Étape 2 AVANT unique] Échantillon de données:")
+    print(sample_before)
+
     lf = lf.unique("uid")
+
+    print(f"[DEBUG Étape 2 APRÈS unique] Lignes après dédupe: {lf.select(pl.len()).collect().item()}")
+
+    # Log quelques exemples de montants après unique
+    sample_after = lf.select("uid", "montant", "dateNotification").head(10).collect()
+    print("[DEBUG Étape 2 APRÈS unique] Échantillon de données:")
+    print(sample_after)
+
     lf_base = lf.select(
         "uid",
         "dateNotification",
@@ -161,49 +176,90 @@ def replace_with_modification_data(lf: pl.LazyFrame):
         "titulaires",
     )
 
+    print(f"[DEBUG Étape 2] lf_base créé: {lf_base.select(pl.len()).collect().item()} lignes")
+
     # Étape 3: Ajouter le modification_id et la colonne données actuelles pour chaque modif
-    lf_concat = (
-        pl.concat(
-            [
-                lf_base.select(
-                    "uid",
-                    "dateNotification",
-                    "datePublicationDonnees",
-                    "montant",
-                    "dureeMois",
-                    "titulaires",
-                ),
-                lf_mods,
-            ],
-            how="vertical_relaxed",
-        )
-        .with_columns(
-            pl.col("dateNotification")
-            .rank(method="ordinal")
-            .over("uid")
-            .cast(pl.Int64)
-            .sub(1)
-            .alias("modification_id")
-        )
-        .with_columns(
-            (
-                pl.col("modification_id") == pl.col("modification_id").max().over("uid")
-            ).alias("donneesActuelles")
-        )
-        .sort(
-            ["uid", "dateNotification", "modification_id"],
-            descending=[False, True, True],
-        )
+    print(f"\n[DEBUG Étape 3] Concaténation de lf_base ({lf_base.select(pl.len()).collect().item()} lignes) et lf_mods ({lf_mods.select(pl.len()).collect().item()} lignes)")
+
+    lf_concat = pl.concat(
+        [
+            lf_base.select(
+                "uid",
+                "dateNotification",
+                "datePublicationDonnees",
+                "montant",
+                "dureeMois",
+                "titulaires",
+            ),
+            lf_mods,
+        ],
+        how="vertical_relaxed",
     )
 
+    print(f"[DEBUG Étape 3] Après concat: {lf_concat.select(pl.len()).collect().item()} lignes")
+
+    lf_concat = lf_concat.with_columns(
+        pl.col("dateNotification")
+        .rank(method="ordinal")
+        .over("uid")
+        .cast(pl.Int64)
+        .sub(1)
+        .alias("modification_id")
+    ).with_columns(
+        (
+            pl.col("modification_id") == pl.col("modification_id").max().over("uid")
+        ).alias("donneesActuelles")
+    )
+
+    print("\n[DEBUG Étape 3 AVANT tri] Échantillon avant tri (dateNotification DESC):")
+    sample_before_sort = lf_concat.select("uid", "dateNotification", "modification_id", "montant", "donneesActuelles").head(20).collect()
+    print(sample_before_sort)
+
+    lf_concat = lf_concat.sort(
+        ["uid", "dateNotification", "modification_id"],
+        descending=[False, True, True],
+    )
+
+    print("\n[DEBUG Étape 3 APRÈS tri] Échantillon après tri (dateNotification DESC = récent en HAUT):")
+    sample_after_sort = lf_concat.select("uid", "dateNotification", "modification_id", "montant", "donneesActuelles").head(20).collect()
+    print(sample_after_sort)
+
     # Étape 4: Remplir les valeurs nulles en utilisant les dernières valeurs non-nulles pour chaque id
+    print("\n[DEBUG Étape 4 AVANT fill_null] Échantillon avec les montants null:")
+    sample_before_fill = lf_concat.select("uid", "dateNotification", "modification_id", "montant", "dureeMois").head(20).collect()
+    print(sample_before_fill)
+
+    # Compter les nulls avant
+    null_count_before = lf_concat.select(
+        pl.col("montant").is_null().sum().alias("montant_nulls"),
+        pl.col("dureeMois").is_null().sum().alias("dureeMois_nulls"),
+    ).collect()
+    print(f"[DEBUG Étape 4 AVANT fill_null] Nulls: {null_count_before}")
+
+    print("\n[DEBUG Étape 4] ⚠️  Application de fill_null(strategy='backward') sur données triées DESC (récent en HAUT)")
+    print("[DEBUG Étape 4] ⚠️  'backward' propage vers le BAS (index croissants) = vers le PASSÉ")
+
     lf_concat = lf_concat.with_columns(
         pl.col("montant", "dureeMois", "titulaires")
         .fill_null(strategy="backward")
         .over("uid")
     )
 
+    print("\n[DEBUG Étape 4 APRÈS fill_null] Échantillon après fill_null:")
+    sample_after_fill = lf_concat.select("uid", "dateNotification", "modification_id", "montant", "dureeMois").head(20).collect()
+    print(sample_after_fill)
+
+    # Compter les nulls après
+    null_count_after = lf_concat.select(
+        pl.col("montant").is_null().sum().alias("montant_nulls"),
+        pl.col("dureeMois").is_null().sum().alias("dureeMois_nulls"),
+    ).collect()
+    print(f"[DEBUG Étape 4 APRÈS fill_null] Nulls: {null_count_after}")
+    print(f"[DEBUG Étape 4] Montants null éliminés: {null_count_before['montant_nulls'][0] - null_count_after['montant_nulls'][0]}")
+
     # Étape 5: Ajouter les données du DataFrame de base
+    print(f"\n[DEBUG Étape 5] Jointure avec les colonnes fixes du DataFrame de base")
+
     lf_final = lf_concat.join(
         lf.drop(
             [
@@ -217,6 +273,18 @@ def replace_with_modification_data(lf: pl.LazyFrame):
         on="uid",
         how="left",
     )
+
+    print(f"[DEBUG Étape 5] DataFrame final: {lf_final.select(pl.len()).collect().item()} lignes")
+
+    # Compter les nulls dans le résultat final
+    final_null_count = lf_final.select(
+        pl.col("montant").is_null().sum().alias("montant_nulls"),
+    ).collect()
+    print(f"[DEBUG Étape 5] Montants null dans le résultat final: {final_null_count}")
+
+    print("="*80)
+    print("[DEBUG replace_with_modification_data] FIN")
+    print("="*80 + "\n")
 
     return lf_final
 
@@ -350,7 +418,23 @@ def extract_unique_titulaires_siret(df: pl.LazyFrame):
 
 @task
 def get_prepare_unites_legales(processed_parquet_path):
-    print("Téléchargement des données unité légales et sélection des colonnes...")
+    print("="*80)
+    print("📥 TÉLÉCHARGEMENT DES DONNÉES SIRENE")
+    print("="*80)
+    print(f"Source: {os.environ['SIRENE_UNITES_LEGALES_URL']}")
+    print("⚠️  Ce téléchargement peut prendre 10-30 minutes selon votre connexion")
+    print("⚠️  Le fichier SIRENE fait plusieurs Go")
+    print("="*80 + "\n")
+
+    import time
+    start_time = time.time()
+
+    def progress_callback(progress):
+        """Callback pour afficher la progression"""
+        elapsed = time.time() - start_time
+        print(f"[SIRENE] Progression: {progress*100:.1f}% | Temps écoulé: {elapsed:.0f}s", flush=True)
+
+    print("[SIRENE] Début du traitement...")
     (
         pl.scan_parquet(os.environ["SIRENE_UNITES_LEGALES_URL"])
         .filter(pl.col("siren").is_not_null())
@@ -360,6 +444,10 @@ def get_prepare_unites_legales(processed_parquet_path):
         .select(["siren", "denominationUniteLegale"])
         .sink_parquet(processed_parquet_path)
     )
+
+    elapsed = time.time() - start_time
+    print(f"\n[SIRENE] ✅ Terminé en {elapsed:.0f}s ({elapsed/60:.1f} minutes)")
+    print(f"[SIRENE] Fichier sauvegardé: {processed_parquet_path}\n")
 
 
 def sort_columns(df: pl.DataFrame, config_columns):

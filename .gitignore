@@ -19,3 +19,4 @@ wiki
 *.lock
 data/sirene*
 data/storage
+data/decp*

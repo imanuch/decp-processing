@@ -1,0 +1,43 @@
+[
+  {
+    "id": "test_local_decp",
+    "name": "Données locales DECP",
+    "owner_org_name": "Test Local",
+    "code": "test_local",
+    "resources": [
+      {
+        "id": "local-2024-10",
+        "title": "decp-2024-10.json",
+        "format": "json",
+        "latest": "data/decp-2024-10.json",
+        "created_at": "2024-10-10T00:00:00",
+        "last_modified": "2024-10-10T00:00:00",
+        "checksum": null,
+        "extras": {},
+        "metrics": {}
+      },
+      {
+        "id": "local-2025-09",
+        "title": "decp-2025-09.json",
+        "format": "json",
+        "latest": "data/decp-2025-09.json",
+        "created_at": "2025-09-01T00:00:00",
+        "last_modified": "2025-09-01T00:00:00",
+        "checksum": null,
+        "extras": {},
+        "metrics": {}
+      },
+      {
+        "id": "local-2025-091",
+        "title": "decp-2025-091.json",
+        "format": "json",
+        "latest": "data/decp-2025-091.json",
+        "created_at": "2025-09-01T00:00:00",
+        "last_modified": "2025-09-01T00:00:00",
+        "checksum": null,
+        "extras": {},
+        "metrics": {}
+      }
+    ]
+  }
+]

@@ -113,7 +113,13 @@ def json_stream_to_parquet(
     tmp_file = tempfile.NamedTemporaryFile(mode="wb", suffix=".ndjson", delete=True)
 
     http_stream_iter = stream_get(url)
+    # Chaîner plusieurs remplacements pour gérer tous les cas de NaN
     stream_replace_iter = stream_replace_bytestring(http_stream_iter, b"NaN,", b"null,")
+    stream_replace_iter = stream_replace_bytestring(stream_replace_iter, b"NaN}", b"null}")
+    stream_replace_iter = stream_replace_bytestring(stream_replace_iter, b"NaN]", b"null]")
+    stream_replace_iter = stream_replace_bytestring(stream_replace_iter, b"NaN ", b"null ")
+    stream_replace_iter = stream_replace_bytestring(stream_replace_iter, b"NaN\n", b"null\n")
+    stream_replace_iter = stream_replace_bytestring(stream_replace_iter, b"NaN\r", b"null\r")
 
     # In first iteration, will find the right format
     chunk = next(stream_replace_iter)
@@ -137,10 +143,51 @@ def json_stream_to_parquet(
     decp_format.coroutine_ijson.close()
     tmp_file.seek(0)
 
-    lf = pl.scan_ndjson(tmp_file.name, schema=decp_format.schema)
-    sink_to_files(lf, output_path, file_format="parquet")
+    print(f"[DEBUG] Conversion du fichier temporaire en parquet: {tmp_file.name}")
+    print(f"[DEBUG] Format DECP: {decp_format.label}")
+    print(f"[DEBUG] Nombre de champs détectés: {len(fields)}")
 
-    tmp_file.close()
+    tmp_filename = tmp_file.name  # Garder le nom avant de fermer
+
+    try:
+        lf = pl.scan_ndjson(tmp_file.name, schema=decp_format.schema)
+        sink_to_files(lf, output_path, file_format="parquet")
+        tmp_file.close()  # Fermer et supprimer seulement si succès
+    except pl.exceptions.ComputeError as e:
+        import sys
+
+        print(f"\n{'='*80}", flush=True)
+        print(f"❌ ERREUR lors de la conversion en parquet", flush=True)
+        print(f"{'='*80}", flush=True)
+        print(f"Fichier source: {url}", flush=True)
+        print(f"Fichier temporaire: {tmp_filename}", flush=True)
+        print(f"Format DECP: {decp_format.label}", flush=True)
+        print(f"Erreur: {e}", flush=True)
+        print(f"{'='*80}\n", flush=True)
+
+        # Flush pour s'assurer que les données sont écrites
+        tmp_file.flush()
+
+        print("[DEBUG] Premières lignes du fichier ndjson:", flush=True)
+        # Lire directement le fichier via son nom (toujours ouvert en écriture)
+        try:
+            with open(tmp_filename, 'rb') as debug_file:
+                for i, line in enumerate(debug_file):
+                    if i >= 5:  # Afficher 5 lignes au lieu de 3
+                        break
+                    decoded_line = line.decode('utf-8', errors='replace')[:500]
+                    print(f"Ligne {i}: {decoded_line}", flush=True)
+        except Exception as read_err:
+            print(f"Erreur lors de la lecture du fichier debug: {read_err}", flush=True)
+
+        print(f"\n{'='*80}", flush=True)
+        print("Pour corriger manuellement, cherchez dans les fichiers JSON les marchés", flush=True)
+        print("avec des titulaires ayant une structure incorrecte.", flush=True)
+        print(f"{'='*80}\n", flush=True)
+        sys.stdout.flush()
+
+        tmp_file.close()  # Fermer même en cas d'erreur
+        raise
 
     return fields, decp_format
 
@@ -175,19 +222,38 @@ def xml_to_dict(element: etree.Element):
 def write_marche_rows(marche: dict, file, decp_format: DecpFormat) -> set[str]:
     """Ajout d'une ligne ndjson pour chaque modification/version du marché."""
     fields = set()
-    for mod in yield_modifications(marche):
-        # Pour decp-2019.json : désimbrication des données des titulaires
-        # voir https://github.com/ColinMaudry/decp-processing/issues/114
-        # complète probablement norm_titulaires(), qui ne faisait pas complètement le taff, donc à fusionner
-        if decp_format.label == "DECP 2019":
-            for f in ["titulaires", "modification_titulaires"]:
-                liste_titulaires = mod.get(f)
-                if liste_titulaires and isinstance(liste_titulaires[0], list):
-                    mod[f] = extract_innermost_struct(liste_titulaires)
+    marche_uid = marche.get("uid", "UNKNOWN")
 
-        file.write(orjson.dumps(mod))
-        file.write(b"\n")
-        fields = fields.union(mod.keys())
+    try:
+        for mod in yield_modifications(marche):
+            # Pour decp-2019.json : désimbrication des données des titulaires
+            # voir https://github.com/ColinMaudry/decp-processing/issues/114
+            # complète probablement norm_titulaires(), qui ne faisait pas complètement le taff, donc à fusionner
+            if decp_format.label == "DECP 2019":
+                for f in ["titulaires", "modification_titulaires"]:
+                    liste_titulaires = mod.get(f)
+                    if liste_titulaires and isinstance(liste_titulaires[0], list):
+                        mod[f] = extract_innermost_struct(liste_titulaires)
+
+            # Vérifier la structure des titulaires avant d'écrire
+            titulaires = mod.get("titulaires")
+            if titulaires is not None:
+                if not isinstance(titulaires, list):
+                    print(f"⚠️  [MARCHE {marche_uid}] titulaires n'est pas une liste: {type(titulaires)}")
+                else:
+                    for i, tit in enumerate(titulaires):
+                        if not isinstance(tit, dict):
+                            print(f"⚠️  [MARCHE {marche_uid}] titulaire[{i}] n'est pas un dict: {type(tit)} = {tit}")
+
+            file.write(orjson.dumps(mod))
+            file.write(b"\n")
+            fields = fields.union(mod.keys())
+    except Exception as e:
+        print(f"\n❌ ERREUR dans write_marche_rows pour le marché UID={marche_uid}")
+        print(f"Erreur: {e}")
+        print(f"Contenu du marché: {str(marche)[:500]}...")
+        raise
+
     return fields
 
 

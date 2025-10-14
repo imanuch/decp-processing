@@ -1,0 +1,142 @@
+[
+  {
+    "id": "test_local_decp_all",
+    "name": "Toutes les données DECP locales",
+    "owner_org_name": "Local",
+    "code": "local_all",
+    "resources": [
+      {
+        "id": "local-2024",
+        "title": "decp-2024.json",
+        "format": "json",
+        "latest": "data/decp-2024.json",
+        "created_at": "2024-01-01T00:00:00",
+        "last_modified": "2024-12-31T00:00:00",
+        "checksum": null,
+        "filesize": 317000000,
+        "extras": {},
+        "metrics": {}
+      },
+      {
+        "id": "local-2025-01",
+        "title": "decp-2025-01.json",
+        "format": "json",
+        "latest": "data/decp-2025-01.json",
+        "created_at": "2025-01-01T00:00:00",
+        "last_modified": "2025-01-31T00:00:00",
+        "checksum": null,
+        "filesize": 35000000,
+        "extras": {},
+        "metrics": {}
+      },
+      {
+        "id": "local-2025-02",
+        "title": "decp-2025-02.json",
+        "format": "json",
+        "latest": "data/decp-2025-02.json",
+        "created_at": "2025-02-01T00:00:00",
+        "last_modified": "2025-02-28T00:00:00",
+        "checksum": null,
+        "filesize": 28000000,
+        "extras": {},
+        "metrics": {}
+      },
+      {
+        "id": "local-2025-03",
+        "title": "decp-2025-03.json",
+        "format": "json",
+        "latest": "data/decp-2025-03.json",
+        "created_at": "2025-03-01T00:00:00",
+        "last_modified": "2025-03-31T00:00:00",
+        "checksum": null,
+        "filesize": 31000000,
+        "extras": {},
+        "metrics": {}
+      },
+      {
+        "id": "local-2025-04",
+        "title": "decp-2025-04.json",
+        "format": "json",
+        "latest": "data/decp-2025-04.json",
+        "created_at": "2025-04-01T00:00:00",
+        "last_modified": "2025-04-30T00:00:00",
+        "checksum": null,
+        "filesize": 114000000,
+        "extras": {},
+        "metrics": {}
+      },
+      {
+        "id": "local-2025-05",
+        "title": "decp-2025-05.json",
+        "format": "json",
+        "latest": "data/decp-2025-05.json",
+        "created_at": "2025-05-01T00:00:00",
+        "last_modified": "2025-05-31T00:00:00",
+        "checksum": null,
+        "filesize": 36000000,
+        "extras": {},
+        "metrics": {}
+      },
+      {
+        "id": "local-2025-06",
+        "title": "decp-2025-06.json",
+        "format": "json",
+        "latest": "data/decp-2025-06.json",
+        "created_at": "2025-06-01T00:00:00",
+        "last_modified": "2025-06-30T00:00:00",
+        "checksum": null,
+        "filesize": 70000000,
+        "extras": {},
+        "metrics": {}
+      },
+      {
+        "id": "local-2025-07",
+        "title": "decp-2025-07.json",
+        "format": "json",
+        "latest": "data/decp-2025-07.json",
+        "created_at": "2025-07-01T00:00:00",
+        "last_modified": "2025-07-31T00:00:00",
+        "checksum": null,
+        "filesize": 109906130,
+        "extras": {},
+        "metrics": {}
+      },
+      {
+        "id": "local-2025-08",
+        "title": "decp-2025-08.json",
+        "format": "json",
+        "latest": "data/decp-2025-08.json",
+        "created_at": "2025-08-01T00:00:00",
+        "last_modified": "2025-08-31T00:00:00",
+        "checksum": null,
+        "filesize": 48000000,
+        "extras": {},
+        "metrics": {}
+      },
+      {
+        "id": "local-2025-09",
+        "title": "decp-2025-09.json",
+        "format": "json",
+        "latest": "data/decp-2025-09.json",
+        "created_at": "2025-09-01T00:00:00",
+        "last_modified": "2025-09-30T00:00:00",
+        "checksum": null,
+        "filesize": 54000000,
+        "extras": {},
+        "metrics": {}
+      },
+      {
+        "id": "local-2025-10",
+        "title": "decp-2025-10.json",
+        "format": "json",
+        "latest": "data/decp-2025-10.json",
+        "created_at": "2025-10-01T00:00:00",
+        "last_modified": "2025-10-14T00:00:00",
+        "checksum": null,
+        "filesize": 29000000,
+        "extras": {},
+        "metrics": {}
+      }
+    ]
+  }
+]

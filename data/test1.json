@@ -1,0 +1,86 @@
+{
+  "marches": {
+    "marche": [
+      {
+        "id": "19-34626",
+        "acheteur": {
+          "id": "32791063400069"
+        },
+        "nature": "Marché",
+        "objet": "Travaux de voiries, assainissement, réseaux divers et espaces verts de la ZAC Multisites à Saint Martin Boulogne - Secteur Marlborough Nord - LOT 2 - RESEAUX DIVERS",
+        "codeCPV": "45231112",
+        "techniques": {
+          "technique": [
+            "Sans objet"
+          ]
+        },
+        "modalitesExecution": {
+          "modaliteExecution": [
+            "Tranches"
+          ]
+        },
+        "marcheInnovant": false,
+        "ccag": "Pas de CCAG",
+        "offresRecues": 3,
+        "attributionAvance": false,
+        "tauxAvance": 0.0,
+        "typeGroupementOperateurs": "Pas de groupement",
+        "sousTraitanceDeclaree": false,
+        "procedure": "Procédure adaptée",
+        "lieuExecution": {
+          "code": "62280",
+          "typeCode": "Code postal"
+        },
+        "dureeMois": 91,
+        "dateNotification": "2019-04-18",
+        "datePublicationDonnees": "2019-03-04",
+        "montant": 374603.0,
+        "typesPrix": {
+          "typePrix": [
+            "Définitif actualisable"
+          ]
+        },
+        "formePrix": "Unitaire",
+        "titulaires": [
+          {
+            "titulaire": {
+              "typeIdentifiant": "SIRET",
+              "id": "42166441800066"
+            }
+          }
+        ],
+        "considerationsSociales": {
+          "considerationSociale": [
+            "Pas de considération sociale"
+          ]
+        },
+        "considerationsEnvironnementales": {
+          "considerationEnvironnementale": [
+            "Pas de considération environnementale"
+          ]
+        },
+        "source": "e-marchespublics",
+        "origineUE": 0.0,
+        "origineFrance": 0.0,
+        "modifications": [
+          {
+            "modification": {
+              "dateNotificationModification": "2024-08-19",
+              "montant": 428824,
+              "id": 1,
+              "datePublicationDonneesModification": "2024-10-07"
+            }
+          },
+          {
+            "modification": {
+              "dateNotificationModification": "2025-06-17",
+              "montant": 432612,
+              "id": 2,
+              "datePublicationDonneesModification": "2025-09-18"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
